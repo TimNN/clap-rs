@@ -705,7 +705,7 @@ impl<'a, 'b> Parser<'a, 'b>
                                   it: &mut Peekable<I>)
                                   -> ClapResult<()>
         where I: Iterator<Item = T>,
-              T: Into<OsString> + Clone
+              T: Into<OsString>
     {
         debugln!("fn=get_matches_with;");
         // Verify all positional assertions pass
@@ -718,8 +718,8 @@ impl<'a, 'b> Parser<'a, 'b>
         let mut subcmd_name: Option<String> = None;
         let mut needs_val_of: Option<&str> = None;
         let mut pos_counter = 1;
-        while let Some(arg) = it.next() {
-            let arg_os = arg.into();
+        let mut it_os = it.map(|cmdline_arg| cmdline_arg.into()).peekable();
+        while let Some(arg_os) = it_os.next() {
             debugln!("Begin parsing '{:?}' ({:?})", arg_os, &*arg_os.as_bytes());
 
             // Is this a new argument, or values from a previous option?
@@ -787,7 +787,7 @@ impl<'a, 'b> Parser<'a, 'b>
 
                 if pos_sc {
                     if &*arg_os == "help" && self.is_set(AppSettings::NeedsSubcommandHelp) {
-                        try!(self.parse_help_subcommand(it));
+                        try!(self.parse_help_subcommand(&mut it_os));
                     }
                     subcmd_name = Some(arg_os.to_str().expect(INVALID_UTF8).to_owned());
                     break;
@@ -812,8 +812,7 @@ impl<'a, 'b> Parser<'a, 'b>
             if self.is_set(AppSettings::LowIndexMultiplePositional) &&
                pos_counter == (self.positionals.len() - 1) {
                 sdebugln!("Found");
-                if let Some(na) = it.peek() {
-                    let n = (*na).clone().into();
+                if let Some(n) = it_os.peek() {
                     if is_new_arg(&n) || self.possible_subcommand(&n) ||
                        suggestions::did_you_mean(&n.to_string_lossy(),
                                                  self.subcommands
@@ -847,8 +846,7 @@ impl<'a, 'b> Parser<'a, 'b>
 
                 // Collect the external subcommand args
                 let mut sc_m = ArgMatcher::new();
-                while let Some(v) = it.next() {
-                    let a = v.into();
+                while let Some(a) = it_os.next() {
                     if a.to_str().is_none() && !self.settings.is_set(AppSettings::StrictUtf8) {
                             return Err(Error::invalid_utf8(&*self.create_current_usage(matcher),
                                                            self.color()));
@@ -940,7 +938,7 @@ impl<'a, 'b> Parser<'a, 'b>
                     .next()
                     .expect(INTERNAL_ERROR_MSG)
             };
-            try!(self.parse_subcommand(sc_name, matcher, it));
+            try!(self.parse_subcommand(sc_name, matcher, &mut it_os));
         } else if self.is_set(AppSettings::SubcommandRequired) {
             let bn = self.meta.bin_name.as_ref().unwrap_or(&self.meta.name);
             return Err(Error::missing_subcommand(bn,
@@ -1009,7 +1007,7 @@ impl<'a, 'b> Parser<'a, 'b>
                               it: &mut Peekable<I>)
                               -> ClapResult<()>
         where I: Iterator<Item = T>,
-              T: Into<OsString> + Clone
+              T: Into<OsString>
     {
         use std::fmt::Write;
         debugln!("fn=parse_subcommand;");

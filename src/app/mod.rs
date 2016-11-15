@@ -1250,7 +1250,7 @@ impl<'a, 'b> App<'a, 'b> {
     /// [`AppSettings::NoBinaryName`]: ./enum.AppSettings.html#variant.NoBinaryName
     pub fn get_matches_from<I, T>(mut self, itr: I) -> ArgMatches<'a>
         where I: IntoIterator<Item = T>,
-              T: Into<OsString> + Clone
+              T: Into<OsString>
     {
         self.get_matches_from_safe_borrow(itr).unwrap_or_else(|e| {
             // Otherwise, write to stderr and exit
@@ -1292,7 +1292,7 @@ impl<'a, 'b> App<'a, 'b> {
     /// [`AppSettings::NoBinaryName`]: ./enum.AppSettings.html#variant.NoBinaryName
     pub fn get_matches_from_safe<I, T>(mut self, itr: I) -> ClapResult<ArgMatches<'a>>
         where I: IntoIterator<Item = T>,
-              T: Into<OsString> + Clone
+              T: Into<OsString>
     {
         self.get_matches_from_safe_borrow(itr)
     }
@@ -1320,7 +1320,7 @@ impl<'a, 'b> App<'a, 'b> {
     /// [`AppSettings::NoBinaryName`]: ./enum.AppSettings.html#variant.NoBinaryName
     pub fn get_matches_from_safe_borrow<I, T>(&mut self, itr: I) -> ClapResult<ArgMatches<'a>>
         where I: IntoIterator<Item = T>,
-              T: Into<OsString> + Clone
+              T: Into<OsString>
     {
         // If there are global arguments, or settings we need to propgate them down to subcommands
         // before parsing incase we run into a subcommand
